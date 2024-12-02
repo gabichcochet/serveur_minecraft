@@ -1,6 +1,6 @@
 # serveur_minecraft : Byte Builder
 
-### PARTICIPANTS : WILLIAM Le Ploe, GABRIEL COCHET, Northon KOFFI, Rodney NGUEMA BEKUI, RAPHAEL GEAY
+### PARTICIPANTS : WILLIAM KROMMER, GABRIEL COCHET, NORTHON KOFFI, RODNEY NGUEMA BEKUI, RAPHAEL GEAY, HUGO AGUER
 
 ### BUT : créer un serveur minecraft de survie accessible à tous (version Java) 
 
@@ -17,6 +17,12 @@ cheats accessibles que par l'admin
 difficulté : normale
 sécurité du serveur (hébergeur du serveur)
 plugins : par exemple pour empecher que le serveur lag(clearlag)
+
+## Surveillance des logs
+
+
+
+
 
 
 
