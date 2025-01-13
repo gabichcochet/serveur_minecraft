@@ -20,6 +20,24 @@ sécurité du serveur (hébergeur du serveur) = contabo
 
 plugins : par exemple pour empecher que le serveur lag(clearlag)
 
+##### partitionement 
+##### étant donner que notre serveur avait plusieurs part de blocks de 5 Go, 7 GO et un de 380 Go, tout avait été fait sur un /minecraft
+
+```
+root@vmi2336822:/mnt/minecraft_forge# lsblk
+NAME    MAJ:MIN RM   SIZE RO TYPE MOUNTPOINT
+loop0     7:0    0 682.9M  1 loop /usr/lib/live/mount/rootfs/filesystem.squashfs
+sda       8:0    0   400G  0 disk
+├─sda1    8:1    0   399G  0 part /mnt
+├─sda14   8:14   0     4M  0 part
+├─sda15   8:15   0   106M  0 part
+└─sda16 259:0    0   913M  0 part
+```
+
+```
+sudo mount -a
+```
+
 ### sécuriser le serveur à l'aide de iptables et fail2ban
 
 ###### permet la connexion entre le seveur de communiquer avec lui même
@@ -59,6 +77,24 @@ iptables -A INPUT -j DROP
 sudo iptables -I INPUT 4 -p tcp --dport 22 -j ACCEPT
 ```
 
+
+```
+root@vmi2336822:~# sudo iptables -L
+Chain INPUT (policy ACCEPT)
+target     prot opt source               destination
+ACCEPT     tcp  --  anywhere             anywhere             tcp dpt:ssh
+ACCEPT     tcp  --  198.7.127.5         anywhere             tcp dpt:25565
+ACCEPT     all  --  anywhere             anywhere             ctstate RELATED,ESTABLISHED
+DROP       all  --  anywhere             anywhere
+
+Chain FORWARD (policy ACCEPT)
+target     prot opt source               destination
+
+Chain OUTPUT (policy ACCEPT)
+target     prot opt source               destination
+ACCEPT     all  --  anywhere             anywhere
+```
+
 ###### installer fail2ban
 
 ```
@@ -68,7 +104,7 @@ apt install fail2ban
 ###### configuration du fail2ban
 
 ```
-nano /etc/fail2ban/jail.local
+nano /etc/fail2ban/jail.d/minecraft.conf
 ```
 
 ```
@@ -76,10 +112,12 @@ nano /etc/fail2ban/jail.local
 enabled = true
 port = 25565
 filter = minecraft
-logpath = /path/to/minecraft/logs/latest.log
+logpath = /path/to/your/minecraft/logs/latest.log
 maxretry = 5
-findtime = 500
-bantime = 3800
+bantime = 3600  # Ban time in seconds (1 hour)
+findtime = 600  # Time window to track failed attempts (10 minutes)
+action = iptables[name=Minecraft, port=25565, protocol=tcp]
+
 ```
 
 ```
@@ -87,12 +125,25 @@ nano /etc/fail2ban/filter.d/minecraft.conf
 ```
 
 ```
-[INCLUDES]
-before = common.conf
-
 [Definition]
-failregex = 198.1.172.2(par exemple) lost connection
-ignoreregex =
+failregex = ^.*\[.*\] .*(Invalid IP address).*$
+ignoreregex = ^.*\[.*\] .*(Invalid IP address: 192.168.1.100).*$
+
+```
+
+```
+nano /etc/fail2ban/jail.local
+```
+
+```
+[invalid-ip-address]
+enabled = true
+filter = invalid-ip-address
+action = iptables[name=invalid-ip-address, port=ssh, protocol=tcp]
+logpath = /path/to/your/logfile.log
+maxretry = 3
+bantime = 3600
+findtime = 600
 ```
 
 ###### reboot le fail2ban
@@ -103,6 +154,23 @@ systemctl restart fail2ban
 
 ```
 systemctl enable fail2ban
+```
+
+```
+fail2ban-client status minecraft
+```
+
+```
+Status for the jail: minecraft
+|- Filter
+|  |- Currently failed: 0
+|  |- Total failed: 3
+|  |- File list:    /path/to/your/minecraft/logs/latest.log
+|
+|- Actions
+|  |- Currently banned: 1
+|  |- Total banned: 1
+|  `- Banned IP list:   192.168.1.100
 ```
 
 ### installation du(des serveurs)
